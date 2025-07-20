@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #f093fb;
+            --success: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --dark: #2d3748;
+            --light: #f7fafc;
+            --border: #e2e8f0;
+            --text: #2d3748;
+            --text-light: #718096;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-lg: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        [data-theme="dark"] {
+            --light: #1a202c;
+            --dark: #f7fafc;
+            --border: #2d3748;
+            --text: #f7fafc;
+            --text-light: #a0aec0;
+            --shadow: 0 10px 25px rgba(0,0,0,0.3);
+            --shadow-lg: 0 25px 50px rgba(0,0,0,0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, #edf2f7 100%);
+            color: var(--text);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section, .preview-section {
+            background: var(--light);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover, .preview-section:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--light);
+            color: var(--text);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #38a169);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #e53e3e);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .items-container {
+            margin-top: 1.5rem;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .item-row:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        @media (max-width: 768px) {
+            .item-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .remove-item {
+            height: 44px;
+            width: 44px;
+            padding: 0;
+            border-radius: 50%;
+        }
+
+        .totals {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .totals-row:last-child {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .preview-logo {
+            max-width: 150px;
+            max-height: 80px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .preview-info {
+            text-align: right;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-table th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .preview-total {
+            text-align: right;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .logo-upload {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo-preview:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .logo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .currency-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .currency-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--light);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .currency-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        @media print {
+            .form-section, .header, .theme-toggle, .actions {
+                display: none !important;
+            }
+            
+            .preview-section {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+        }
+
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-file-invoice-dollar"></i> Invoice Generator Pro</h1>
+            <p>Create professional invoices in seconds</p>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+        </header>
+
+        <div class="main-content">
+            <!-- Form Section -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Invoice Details
+                </h2>
+
+                <!-- Freelancer Info -->
+                <div class="form-group">
+                    <label>Your Information</label>
+                    <input type="text" id="freelancerName" placeholder="Your Name/Business Name" onchange="updatePreview()">
+                </div>
+
+                <div class="form-group">
+                    <label>Your Email</label>
+                    <input type="email" id="freelancerEmail" placeholder="your@email.com" onchange="updatePreview()">
+                </div>
+
+                <!-- Logo Upload -->
+                <div class="form-group">
+                    <label>Business Logo (Optional)</label>
+                    <div class="logo-upload">
+                        <div class="logo-preview" onclick="document.getElementById('logoInput').click()">
+                            <i class="fas fa-upload" id="logo-placeholder"></i>
+                            <img id="logo-image" style="display: none;">
+                        </div>
+                        <input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(event)" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Currency Selector -->
+                <div class="form-group">
+                    <label>Currency</label>
+                    <div class="currency-selector">
+                        <button class="currency-btn active" onclick="setCurrency('$')">$ USD</button>
+                        <button class="currency-btn" onclick="setCurrency('€')">€ EUR</button>
+                        <button class="currency-btn" onclick="setCurrency('£')">£ GBP</button>
+                        <button class="currency-btn" onclick="setCurrency('₹')">₹ INR</button>
+                    </div>
+                </div>
+
+                <!-- Client Info -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Client Name *</label>
+                        <input type="text" id="clientName" placeholder="John Doe" onchange="updatePreview()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Email</label>
+                        <input type="email" id="clientEmail" placeholder="client@email.com" onchange="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Invoice Date *</label>
+                        <input type="date" id="invoiceDate" onchange="updatePreview()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number *</label>
+                        <input type="text" id="invoiceNumber" placeholder="INV-001" onchange="updatePreview()" required>
+                    </div>
+                </div>
+
+                <!-- Invoice Items -->
+                <div class="form-group">
+                    <label>Invoice Items</label>
+                    <div id="itemsContainer" class="items-container">
+                        <div class="item-row">
+                            <div>
+                                <label>Description</label>
+                                <input type="text" placeholder="Service/Product" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Qty</label>
+                                <input type="number" value="1" min="1" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Unit Price</label>
+                                <input type="number" step="0.01" placeholder="0.00" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Subtotal</label>
+                                <input type="text" readonly class="item-subtotal">
+                            </div>
+                            <button type="button" class="btn btn-danger remove-item" onclick="removeItem(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline" onclick="addItem()">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+
+                <!-- Tax -->
+                <div class="form-group">
+                    <label>Tax (%)</label>
+                    <input type="number" id="taxRate" value="0" min="0" max="100" step="0.1" onchange="updatePreview()" placeholder="0">
+                </div>
+
+                <!-- Totals -->
+                <div class="totals">
+                    <div class="totals-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="totals-row">
+                        <span>Tax (<span id="taxPercent">0</span>%):</span>
+                        <span id="taxAmount">$0.00</span>
+                    </div>
+                    <div class="totals-row">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn btn-success" onclick="downloadPDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="btn btn-outline" onclick="saveToLocalStorage()">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button class="btn btn-outline" onclick="loadFromLocalStorage()">
+                        <i class="fas fa-folder-open"></i> Load Draft
+                    </button>
+                    <button class="btn btn-outline" onclick="resetForm()">
+                        <i class="fas fa-refresh"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section">
+                <h2 class="section-title">
+                    <i class="fas fa-eye"></i>
+                    Live Preview
+                </h2>
+
+                <div id="invoicePreview">
+                    <div class="preview-header">
+                        <div>
+                            <h3 id="previewFreelancerName">Your Name</h3>
+                            <p id="previewFreelancerEmail">your@email.com</p>
+                            <img id="previewLogo" class="preview-logo" style="display: none;">
+                        </div>
+                        <div class="preview-info">
+                            <h2>INVOICE</h2>
+                            <p><strong>Invoice #:</strong> <span id="previewInvoiceNumber">INV-001</span></p>
+                            <p><strong>Date:</strong> <span id="previewDate">MM/DD/YYYY</span></p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h4>Bill To:</h4>
+                        <p id="previewClientName">Client Name</p>
+                        <p id="previewClientEmail">client@email.com</p>
+                    </div>
+
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewItems">
+                        </tbody>
+                    </table>
+
+                    <div class="preview-total">
+                        <div><strong>Subtotal: <span id="previewSubtotal">$0.00</span></strong></div>
+                        <div>Tax (<span id="previewTaxPercent">0</span>%): <span id="previewTaxAmount">$0.00</span></div>
+                        <div style="font-size: 1.5rem; margin-top: 0.5rem; color: var(--primary);">
+                            <strong>Total: <span id="previewTotal">$0.00</span></strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-light);">
+                        <p>Thank you for your business!</p>
+                        <p>Payment due within 30 days</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating PDF...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentCurrency = '$';
+        let logoData = null;
+
+        // Initialize date picker with today's date
+        document.getElementById('invoiceDate').valueAsDate = new Date();
+
+        // Auto-generate invoice number
+        function generateInvoiceNumber() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `INV-${year}${month}${day}-${random}`;
+        }
+
+        // Set auto invoice number if field is empty
+        document.getElementById('invoiceNumber').value = generateInvoiceNumber();
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                icon.className = 'fas fa-moon';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                icon.className = 'fas fa-sun';
+            }
+            updatePreview();
+        }
+
+        // Currency management
+        function setCurrency(symbol) {
+            currentCurrency = symbol;
+            document.querySelectorAll('.currency-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updatePreview();
+        }
+
+        // Logo upload
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoData = e.target.result;
+                    document.getElementById('logo-image').src = logoData;
+                    document.getElementById('logo-image').style.display = 'block';
+                    document.getElementById('logo-placeholder').style.display = 'none';
+                    document.getElementById('previewLogo').src = logoData;
+                    document.getElementById('previewLogo').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Add new item
+        function addItem() {
+            const container = document.getElementById('itemsContainer');
+            const newItem = document.createElement('div');
+            newItem.className = 'item-row';
+            newItem.innerHTML = `
+                <div>
+                    <label>Description</label>
+                    <input type="text" placeholder="Service/Product" onchange="updatePreview()">
+                </div>
+                <div>
+                    <label>Qty</label>
+                    <input type="number" value="1" min="1" onchange="updatePreview()">
+                </div>
+                <div>
+                    <label>Unit Price</label>
+                    <input type="number" step="0.01" placeholder="0.00" onchange="updatePreview()">
+                </div>
+                <div>
+                    <label>Subtotal</label>
+                    <input type="text" readonly class="item-subtotal">
+                </div>
+                <button type="button" class="btn btn-danger remove-item" onclick="removeItem(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(newItem);
+            updatePreview();
+        }
+
+        // Remove item
+        function removeItem(button) {
+            const container = document.getElementById('itemsContainer');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+                updatePreview();
+            } else {
+                alert('You need at least one item on the invoice.');
+            }
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return `${currentCurrency}${parseFloat(amount).toFixed(2)}`;
+        }
+
+        // Update preview and calculations
+        function updatePreview() {
+            let subtotal = 0;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const items = [];
+
+            // Get all items
+            const itemRows = document.querySelectorAll('.item-row');
+            itemRows.forEach(row => {
+                const description = row.querySelector('input[type="text"]').value;
+                const quantity = parseInt(row.querySelector('input[type="number"]').value) || 0;
+                const unitPrice = parseFloat(row.querySelectorAll('input[type="number"]')[1].value) || 0;
+                const itemSubtotal = quantity * unitPrice;
+                
+                row.querySelector('.item-subtotal').value = formatCurrency(itemSubtotal);
+                subtotal += itemSubtotal;
+                
+                items.push({ description, quantity, unitPrice, itemSubtotal });
+            });
+
+            // Calculate tax and total
+            const taxAmount = subtotal * (taxRate / 100);
+            const total = subtotal + taxAmount;
+
+            // Update totals display
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('taxPercent').textContent = taxRate;
+            document.getElementById('taxAmount').textContent = formatCurrency(taxAmount);
+            document.getElementById('total').textContent = formatCurrency(total);
+
+            // Update preview
+            document.getElementById('previewFreelancerName').textContent = document.getElementById('freelancerName').value || 'Your Name';
+            document.getElementById('previewFreelancerEmail').textContent = document.getElementById('freelancerEmail').value || 'your@email.com';
+            document.getElementById('previewClientName').textContent = document.getElementById('clientName').value || 'Client Name';
+            document.getElementById('previewClientEmail').textContent = document.getElementById('clientEmail').value || 'client@email.com';
+            document.getElementById('previewInvoiceNumber').textContent = document.getElementById('invoiceNumber').value || 'INV-001';
+            
+            const date = new Date(document.getElementById('invoiceDate').value);
+            document.getElementById('previewDate').textContent = date.toLocaleDateString();
+
+            // Update preview items
+            const previewItems = document.getElementById('previewItems');
+            previewItems.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.description}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(item.unitPrice)}</td>
+                    <td>${formatCurrency(item.itemSubtotal)}</td>
+                `;
+                previewItems.appendChild(row);
+            });
+
+            // Update preview totals
+            document.getElementById('previewSubtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('previewTaxPercent').textContent = taxRate;
+            document.getElementById('previewTaxAmount').textContent = formatCurrency(taxAmount);
+            document.getElementById('previewTotal').textContent = formatCurrency(total);
+
+            // Save to localStorage automatically
+            saveToLocalStorage();
+        }
+
+        // Download PDF
+        async function downloadPDF() {
+            const element = document.getElementById('invoicePreview');
+            const loading = document.getElementById('loading');
+            
+            loading.style.display = 'block';
+            
+            const opt = {
+                margin: 1,
+                filename: `invoice-${document.getElementById('invoiceNumber').value}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            try {
+                await html2pdf().set(opt).from(element).save();
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            const data = {
+                freelancerName: document.getElementById('freelancerName').value,
+                freelancerEmail: document.getElementById('freelancerEmail').value,
+                clientName: document.getElementById('clientName').value,
+                clientEmail: document.getElementById('clientEmail').value,
+                invoiceNumber: document.getElementById('invoiceNumber').value,
+                invoiceDate: document.getElementById('invoiceDate').value,
+                taxRate: document.getElementById('taxRate').value,
+                currency: currentCurrency,
+                logo: logoData,
+                items: []
+            };
+
+            const itemRows = document.querySelectorAll('.item-row');
+            itemRows.forEach(row => {
+                data.items.push({
+                    description: row.querySelector('input[type="text"]').value,
+                    quantity: row.querySelector('input[type="number"]').value,
+                    unitPrice: row.querySelectorAll('input[type="number"]')[1].value
+                });
+            });
+
+            localStorage.setItem('invoiceData', JSON.stringify(data));
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('invoiceData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                
+                document.getElementById('freelancerName').value = data.freelancerName || '';
+                document.getElementById('freelancerEmail').value = data.freelancerEmail || '';
+                document.getElementById('clientName').value = data.clientName || '';
+                document.getElementById('clientEmail').value = data.clientEmail || '';
+                document.getElementById('invoiceNumber').value = data.invoiceNumber || generateInvoiceNumber();
+                document.getElementById('invoiceDate').value = data.invoiceDate || new Date().toISOString().split('T')[0];
+                document.getElementById('taxRate').value = data.taxRate || 0;
+                
+                // Set currency
+                if (data.currency && data.currency !== currentCurrency) {
+                    document.querySelector(`[onclick="setCurrency('${data.currency}')"]`).click();
+                }
+
+                // Set logo
+                if (data.logo) {
+                    logoData = data.logo;
+                    document.getElementById('logo-image').src = logoData;
+                    document.getElementById('logo-image').style.display = 'block';
+                    document.getElementById('logo-placeholder').style.display = 'none';
+                    document.getElementById('previewLogo').src = logoData;
+                    document.getElementById('previewLogo').style.display = 'block';
+                }
+
+                // Clear and load items
+                const container = document.getElementById('itemsContainer');
+                container.innerHTML = '';
+                
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => {
+                        const newItem = document.createElement('div');
+                        newItem.className = 'item-row';
+                        newItem.innerHTML = `
+                            <div>
+                                <label>Description</label>
+                                <input type="text" placeholder="Service/Product" value="${item.description}" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Qty</label>
+                                <input type="number" value="${item.quantity}" min="1" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Unit Price</label>
+                                <input type="number" step="0.01" value="${item.unitPrice}" placeholder="0.00" onchange="updatePreview()">
+                            </div>
+                            <div>
+                                <label>Subtotal</label>
+                                <input type="text" readonly class="item-subtotal">
+                            </div>
+                            <button type="button" class="btn btn-danger remove-item" onclick="removeItem(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                        container.appendChild(newItem);
+                    });
+                } else {
+                    // Add default item if no saved items
+                    addItem();
+                }
+
+                updatePreview();
+                alert('Invoice loaded successfully!');
+            } else {
+                alert('No saved invoice found.');
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            if (confirm('Are you sure you want to reset all fields?')) {
+                document.getElementById('freelancerName').value = '';
+                document.getElementById('freelancerEmail').value = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientEmail').value = '';
+                document.getElementById('invoiceNumber').value = generateInvoiceNumber();
+                document.getElementById('invoiceDate').valueAsDate = new Date();
+                document.getElementById('taxRate').value = 0;
+                
+                // Reset logo
+                logoData = null;
+                document.getElementById('logo-image').style.display = 'none';
+                document.getElementById('logo-placeholder').style.display = 'block';
+                document.getElementById('previewLogo').style.display = 'none';
+                
+                // Reset items
+                const container = document.getElementById('itemsContainer');
+                container.innerHTML = '';
+                addItem();
+                
+                updatePreview();
+                localStorage.removeItem('invoiceData');
+            }
+        }
+
+        // Initialize
+        updatePreview();
+        
+        // Load saved data on page load
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('invoiceData')) {
+                loadFromLocalStorage();
+            }
+        });
+    </script>
+</body>
+</html>
